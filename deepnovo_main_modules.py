@@ -2281,9 +2281,11 @@ def train():
                   current_step,
                   best_valid_perplexity)
       # stop training if >= 50 epochs
-      epoch = (model.global_step.eval()
+      epoch = (current_step[0]
                * deepnovo_config.batch_size
                / len(feature_index_list_train))
+      # since the size of pretraining dataset might be hugely different from the one for fine tune, we should use
+      # current_step to compute epoch.
       if epoch >= deepnovo_config.epoch_stop:
         print("EPOCH: {0:.1f}, EXCEED {1:d}, STOP TRAINING LOOP".format(
           epoch,
