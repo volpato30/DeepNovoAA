@@ -394,12 +394,14 @@ class WorkerTest(object):
         raw_sequence = line[deepnovo_config.col_raw_sequence]
         assert raw_sequence, "Error: wrong target format."
         peptide = self._parse_sequence(raw_sequence)
+        if peptide is None:
+          continue
         target_dict[feature_id] = peptide
     self.target_dict = target_dict
 
 
   def _parse_sequence(self, raw_sequence):
-    """TODO(nh2tran): docstring."""
+    """if see unknown modification, return None"""
 
     #~ print("".join(["="] * 80)) # section-separating line
     #~ print("WorkerTest._parse_sequence()")
@@ -424,7 +426,7 @@ class WorkerTest(object):
         else: # unknown modification
           print("ERROR: unknown modification!")
           print("raw_sequence = ", raw_sequence)
-          sys.exit()
+          return None
       else:
         peptide.append(raw_sequence[index])
         index += 1
