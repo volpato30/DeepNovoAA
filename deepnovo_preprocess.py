@@ -196,6 +196,7 @@ def compute_peptide_mass(peptide):
 # M(+15.99) >> M(Oxidation)
 # NQ(+.98) >> NQ(Deamidation)
 def parse_sequence_with_mod(raw_sequence):
+  """ return None if the peptide contains unknown mod"""
   #print("parse_sequence_with_mod()")
 
   raw_sequence_len = len(raw_sequence)
@@ -218,7 +219,7 @@ def parse_sequence_with_mod(raw_sequence):
       else:  # unknown modification
         print("ERROR: unknown modification!")
         print("raw_sequence = ", raw_sequence)
-        sys.exit()
+        return None
     else:
       peptide.append(raw_sequence[index])
       index += 1
@@ -248,6 +249,8 @@ def calculate_mass_shift_ppm(input_feature_file):
   csv_reader = csv.DictReader(open(input_feature_file))
   for row in csv_reader:
     peptide = parse_sequence_with_mod(row['seq'])
+    if peptide is None:
+      continue
     precursor_mz = float(row['m/z'])
     precursor_charge = float(row['z'])
     peptide_mass = compute_peptide_mass(peptide)

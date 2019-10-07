@@ -11,10 +11,10 @@ import aa_workflow_step_5
 
 
 data_fasta_dir = "data.fasta/"
-patient_id = "Mel16"
-data_training_dir = "data.training/aa.hla.bassani.nature_2016.mel_16.class_1/"
-num_fractions = 11
-model_dir = "train.mel_16.class_1" # before training, create this empty folder at the same level as Python scripts.
+# patient_id = "Mel16"
+data_training_dir = "HLA_London/class1/"
+num_fractions = 1
+model_dir = "train" # before training, create this empty folder at the same level as Python scripts.
 
 
 # ================================================================================
@@ -126,16 +126,16 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 
 # Run merge_mgf_file() and merge_feature_file()
 # ======================= UNCOMMENT and RUN ======================================
-# ~ folder_path = data_training_dir
-# ~ fraction_list = range(0, num_fractions)
-# ~ merge_mgf_file(
-    # ~ input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
-    # ~ fraction_list=fraction_list,
-    # ~ output_file=folder_path + "spectrum.mgf")
-# ~ merge_feature_file(
-    # ~ input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
-    # ~ fraction_list=fraction_list,
-    # ~ output_file=folder_path + "feature.csv")
+folder_path = data_training_dir
+fraction_list = range(0, num_fractions)
+merge_mgf_file(
+    input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
+    fraction_list=fraction_list,
+    output_file=folder_path + "spectrum.mgf")
+merge_feature_file(
+    input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
+    fraction_list=fraction_list,
+    output_file=folder_path + "feature.csv")
 # ================================================================================
 # We will get two output files in the same folder: "spectrum.mgf" and "feature.csv".
 # Both functions also report the number of entries that have been processed: "counter = 694565".
@@ -143,8 +143,8 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 
 # Run split_feature_unlabel()
 # ======================= UNCOMMENT and RUN ======================================
-# ~ input_feature_file = data_training_dir + "feature.csv"
-# ~ split_feature_unlabel(input_feature_file)
+input_feature_file = data_training_dir + "feature.csv"
+split_feature_unlabel(input_feature_file)
 # ================================================================================
 # It will split the "feature.csv" into 2 files: "feature.csv.labeled" and "feature.csv.unlabeled".
 # It also reports the number of labeled and unlabel features: "num_labeled = 207332" and "num_unlabeled = 487233".
@@ -152,12 +152,12 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 
 # Run calculate_mass_shift_ppm() and correct_mass_shift_ppm()
 # ======================= UNCOMMENT and RUN ======================================
-# ~ labeled_feature_file = data_training_dir + "feature.csv.labeled"
-# ~ ppm = calculate_mass_shift_ppm(labeled_feature_file)
-# ~ input_feature_file = data_training_dir + "feature.csv.labeled"
-# ~ correct_mass_shift_ppm(input_feature_file, ppm)
-# ~ input_feature_file = data_training_dir + "feature.csv"
-# ~ correct_mass_shift_ppm(input_feature_file, ppm)
+labeled_feature_file = data_training_dir + "feature.csv.labeled"
+ppm = calculate_mass_shift_ppm(labeled_feature_file)
+input_feature_file = data_training_dir + "feature.csv.labeled"
+correct_mass_shift_ppm(input_feature_file, ppm)
+input_feature_file = data_training_dir + "feature.csv"
+correct_mass_shift_ppm(input_feature_file, ppm)
 # ================================================================================
 # The mass shift is calculated from "feature.csv.labeled".
 # The mass shift ppm (part per million) is reported as: "mean_precursor_ppm = 7.07514819678".
@@ -165,9 +165,9 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 
 # Run split_feature_training_noshare()
 # ======================= UNCOMMENT and RUN ======================================
-# ~ input_feature_file = data_training_dir + "feature.csv.labeled.mass_corrected"
-# ~ proportion = [0.90, 0.05, 0.05]
-# ~ split_feature_training_noshare(input_feature_file, proportion)
+input_feature_file = data_training_dir + "feature.csv.labeled.mass_corrected"
+proportion = [0.90, 0.05, 0.05]
+split_feature_training_noshare(input_feature_file, proportion)
 # ================================================================================
 # It will split "feature.csv.labeled.mass_corrected" into train/valid/test sets with "proportion = [0.9, 0.05, 0.05]".
 # Those 3 sets do not share common peptides.
@@ -188,40 +188,40 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # Run DeepNovo training
 # The training will stop after 10 epoch. The model with best performance on the valid set, "ckpt-16200" is saved in the model folder "train.mel_16.class_1".
 # ======================= UNCOMMENT and RUN ======================================
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --train"]
-# ~ command += ["--train_dir", model_dir]
-# ~ command += ["--train_spectrum", data_training_dir + "spectrum.mgf"]
-# ~ command += ["--train_feature", data_training_dir + "feature.csv.labeled.mass_corrected.train.noshare"]
-# ~ command += ["--valid_spectrum", data_training_dir + "spectrum.mgf"]
-# ~ command += ["--valid_feature", data_training_dir + "feature.csv.labeled.mass_corrected.valid.noshare"]
-# ~ command += ["--reset_step"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --train"]
+command += ["--train_dir", model_dir]
+command += ["--train_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--train_feature", data_training_dir + "feature.csv.labeled.mass_corrected.train.noshare"]
+command += ["--valid_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--valid_feature", data_training_dir + "feature.csv.labeled.mass_corrected.valid.noshare"]
+command += ["--reset_step"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # ================================================================================
 
 # Run DeepNovo testing
 # ======================= UNCOMMENT and RUN ======================================
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test_true_feeding"]
-# ~ command += ["--train_dir", model_dir]
-# ~ command += ["--test_spectrum", data_training_dir + "spectrum.mgf"]
-# ~ command += ["--test_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
-# ~ command += ["--train_dir", model_dir]
-# ~ command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
-# ~ command += ["--denovo_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# ~ command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# ~ command += ["--predicted_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test_true_feeding"]
+command += ["--train_dir", model_dir]
+command += ["--test_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--test_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command = " ".join(command)
+print(command)
+os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
+command += ["--train_dir", model_dir]
+command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--denovo_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command = " ".join(command)
+print(command)
+os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command += ["--predicted_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # ================================================================================
 # The testing accuracy at the amino acid (AA) and peptide levels will be reported as following:
 #   "precision_AA_mass_db  = 0.8425"
@@ -238,13 +238,13 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 
 # Run DeepNovo de novo sequencing on all features (label and unlabeled)
 # ======================= UNCOMMENT and RUN ======================================
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
-# ~ command += ["--train_dir", model_dir]
-# ~ command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
-# ~ command += ["--denovo_feature", data_training_dir + "feature.csv.mass_corrected"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
+command += ["--train_dir", model_dir]
+command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--denovo_feature", data_training_dir + "feature.csv.mass_corrected"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # ================================================================================
 # The de novo results will be written to the file "feature.csv.mass_corrected.deepnovo_denovo".
 # The tool will also report the number of features that have been processed:
@@ -268,12 +268,12 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # This script selects a threshold of de novo confidence scores and uses it to filter de novo results.
 # The score threshold is calculated based on a 95% cutoff of the testing accuracy obtained at the end of Step 2 above.
 # ======================= UNCOMMENT and RUN ======================================
-# ~ accuracy_cutoff = 0.95
-# ~ accuracy_file = data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo.accuracy"
-# ~ score_cutoff = find_score_cutoff(accuracy_file, accuracy_cutoff)
-# ~ input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo"
-# ~ output_file = input_file + ".top95"
-# ~ select_top_score(input_file, output_file, score_cutoff)
+accuracy_cutoff = 0.95
+accuracy_file = data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo.accuracy"
+score_cutoff = find_score_cutoff(accuracy_file, accuracy_cutoff)
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo"
+output_file = input_file + ".top95"
+select_top_score(input_file, output_file, score_cutoff)
 # ================================================================================
 # After this step we'll get the file "feature.csv.mass_corrected.deepnovo_denovo.top95".
 # The score cutoff and the number of selected features will also be reported:
@@ -284,26 +284,26 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # Run convert_I_to_L()
 # This script converts I (Isoleucine) to L (Leucine) in all de novo peptides, because de novo sequencing is not able to distinguish them.
 # ======================= UNCOMMENT and RUN ======================================
-# ~ input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95"
-# ~ output_file = input_file + ".I_to_L"
-# ~ convert_I_to_L(input_file, output_file)
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95"
+output_file = input_file + ".I_to_L"
+convert_I_to_L(input_file, output_file)
 # ================================================================================
 
 # Run correct_by_consensus()
 # This script corrects de novo sequencing errors by grouping predicted sequences of the same mass together and voting the consensus sequence.
 # ======================= UNCOMMENT and RUN ======================================
-# ~ input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L"
-# ~ output_file = input_file + ".consensus"
-# ~ correct_by_consensus(input_file, output_file)
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L"
+output_file = input_file + ".consensus"
+correct_by_consensus(input_file, output_file)
 # ================================================================================
 
 # Run filter_by_minlen()
 # This script filters out sequences of length less than 5 amino acids.
 # ======================= UNCOMMENT and RUN ======================================
-# ~ minlen = 5
-# ~ input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus"
-# ~ output_file = input_file + ".minlen" + str(minlen)
-# ~ filter_by_minlen(input_file, output_file, minlen)
+minlen = 5
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus"
+output_file = input_file + ".minlen" + str(minlen)
+filter_by_minlen(input_file, output_file, minlen)
 # ================================================================================
 # The numbers of features will be reported as:
 #   "total_feature =  233589"
@@ -315,12 +315,12 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # We test its accuracy against the test set:
 # Run DeepNovo testing
 # ======================= UNCOMMENT and RUN ======================================
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# ~ command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# ~ command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # ================================================================================
 # We get these results:
 #   "precision_AA_mass_db  = 0.9530"
@@ -329,12 +329,12 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # Repeat the same testing but now against all labeled features:
 # Run DeepNovo testing
 # ====================== UNCOMMENT and RUN =======================================
-# ~ command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# ~ command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected"]
-# ~ command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
-# ~ command = " ".join(command)
-# ~ print(command)
-# ~ os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected"]
+command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # ================================================================================
 # We get these results:
 #   "precision_AA_mass_db  = 0.9797"
@@ -355,7 +355,7 @@ model_dir = "train.mel_16.class_1" # before training, create this empty folder a
 # Before running PEAKS, we need to combine database and de novo peptides into a list.
 # This script will select unique de novo peptides, filter out those that belong to the human Swiss-Prot protein database, and combine the remaining de novo peptides and the database peptides identified from Step 1 into a fasta file.
 # ======================= UNCOMMENT and RUN ======================================
-# ~ aa_workflow_step_4_2.preprocess(
+# ~aa_workflow_step_4_2.preprocess(
     # ~ denovo_file=data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5.denovo_only",
     # ~ db_fasta_file=data_fasta_dir + "uniprot_sprot.human.plus_contaminants.fasta",
     # ~ labeled_feature_file=data_training_dir + "feature.csv.labeled.mass_corrected",
