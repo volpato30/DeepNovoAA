@@ -605,9 +605,13 @@ def step_5(psm_file, netmhc_file, immunogenicity_file, db_fasta_file, labeled_fe
       csv_writer.writerow(row)
 
   print("Selection criteria: >= 1 missense, not flanking hits AND >= 2 psm")
-  num_selection = len([peptide for peptide in denovo_peptide_list
+  selected_peptide_list = [peptide for peptide in denovo_peptide_list
                        if denovo_mutation[peptide]['num_missense_notflanking'] >= 1
-                       and denovo_psm[peptide]['num_psm'] >= 2])
+                       and denovo_psm[peptide]['num_psm'] >= 2]
+  num_selection = len(selected_peptide_list)
+  print("Selected peptides:")
+  for peptide in selected_peptide_list:
+    print(peptide)
   print("num_selection :", num_selection)
 
 
