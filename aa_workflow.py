@@ -355,11 +355,11 @@ model_dir = "train" # before training, create this empty folder at the same leve
 # Before running PEAKS, we need to combine database and de novo peptides into a list.
 # This script will select unique de novo peptides, filter out those that belong to the human Swiss-Prot protein database, and combine the remaining de novo peptides and the database peptides identified from Step 1 into a fasta file.
 # ======================= UNCOMMENT and RUN ======================================
-aa_workflow_step_4_2.preprocess(
-     denovo_file=data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5.denovo_only",
-     db_fasta_file=data_fasta_dir + "uniprot_sprot.mouse.plus_contaminants.fasta",
-     labeled_feature_file=data_training_dir + "feature.csv.labeled.mass_corrected",
-     peptide_list_fasta=data_training_dir + "aa_workflow.step_4.peptide_list.fasta")
+# aa_workflow_step_4_2.preprocess(
+#      denovo_file=data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5.denovo_only",
+#      db_fasta_file=data_fasta_dir + "uniprot_sprot.mouse.plus_contaminants.fasta",
+#      labeled_feature_file=data_training_dir + "feature.csv.labeled.mass_corrected",
+#      peptide_list_fasta=data_training_dir + "aa_workflow.step_4.peptide_list.fasta")
 # ================================================================================
 # The numbers of de novo and database peptides are reported as following:
 #   "Number of top-scoring denovo peptides: 17318"
@@ -375,9 +375,9 @@ aa_workflow_step_4_2.preprocess(
 
 # Extract de novo peptides from the PSMs of PEAKS X DB search round 2.
 # ======================= UNCOMMENT and RUN ======================================
-# aa_workflow_step_4_2.postprocess(
-#     psm_file = data_training_dir + "aa_workflow.step_4.psm.csv",
-#     output_denovo_peptide_file = data_training_dir + "aa_workflow.step_4.output_peptide_list")
+aa_workflow_step_4_2.postprocess(
+    psm_file = data_training_dir + "aa_workflow.step_4.psm.csv",
+    output_denovo_peptide_file = data_training_dir + "aa_workflow.step_4.output_peptide_list")
 # ================================================================================
 # The number of de novo peptides is reported as following:
 #   "num_denovo_peptides = 1259"
@@ -398,7 +398,8 @@ aa_workflow_step_4_2.preprocess(
 #     snp_enst_fasta=None,
 #     snp_sample_id=None,
 #     output_neoantigen_criteria=data_training_dir + "aa_workflow.step_5.output_neoantigen_criteria.csv",
-#     output_protein_mutation=data_training_dir + "aa_workflow.step_5.protein_mutation.csv")
+#     output_protein_mutation=data_training_dir + "aa_workflow.step_5.protein_mutation.csv",
+#     num_alleles=2)
 
 
 
