@@ -312,7 +312,7 @@ focal_loss = True
 batch_size = 32
 print("batch_size ", batch_size)
 
-epoch_stop = 50
+epoch_stop = 10
 print("epoch_stop ", epoch_stop)
 
 train_stack_size = 1000
