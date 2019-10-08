@@ -3,9 +3,11 @@ from __future__ import division
 from __future__ import print_function
 
 import csv
+import re
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
 
+_mod_prog = re.compile('\(\+[0-9.]+\)')
 
 def drop_mod(peptide):
   peptide = peptide.replace("M(Oxidation)", "M")
@@ -15,10 +17,7 @@ def drop_mod(peptide):
 
 
 def drop_mod_peaks(peptide):
-  peptide = peptide.replace("M(+15.99)", "M")
-  peptide = peptide.replace("N(+.98)", "N")
-  peptide = peptide.replace("Q(+.98)", "Q")
-  return peptide
+    return _mod_prog.sub("", peptide)
 
 
 def change_I_to_L(string):
