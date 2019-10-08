@@ -388,18 +388,19 @@ aa_workflow_step_4_2.postprocess(
 # ================================================================================
 # Step 5: Neoantigen selection. 
 # ================================================================================
-# aa_workflow_step_5.step_5(
-#     psm_file=data_training_dir + "aa_workflow.step_4.psm.csv",
-#     netmhc_file=data_training_dir + "aa_workflow.step_5.netmhcpan.csv",
-#     immunogenicity_file=data_training_dir + "aa_workflow.step_5.immunogenicity.csv",
-#     db_fasta_file=data_fasta_dir + "uniprot_sprot.mouse.plus_contaminants.fasta",
-#     labeled_feature_file=data_training_dir + "feature.csv.labeled",
-#     snp_file=None,
-#     snp_enst_fasta=None,
-#     snp_sample_id=None,
-#     output_neoantigen_criteria=data_training_dir + "aa_workflow.step_5.output_neoantigen_criteria.csv",
-#     output_protein_mutation=data_training_dir + "aa_workflow.step_5.protein_mutation.csv",
-#     num_alleles=2)
+aa_workflow_step_5.step_5(
+    psm_file=data_training_dir + "aa_workflow.step_4.psm.csv",
+    # netmhc_file=data_training_dir + "aa_workflow.step_5.netmhcpan.csv",
+    netmhc_file=None,
+    immunogenicity_file=data_training_dir + "aa_workflow.step_5.immunogenicity.csv",
+    db_fasta_file=data_fasta_dir + "uniprot_sprot.mouse.plus_contaminants.fasta",
+    labeled_feature_file=data_training_dir + "feature.csv.labeled",
+    snp_file=None,
+    snp_enst_fasta=None,
+    snp_sample_id=None,
+    output_neoantigen_criteria=data_training_dir + "aa_workflow.step_5.output_neoantigen_criteria.csv",
+    output_protein_mutation=data_training_dir + "aa_workflow.step_5.protein_mutation.csv",
+    num_alleles=2)
 
 
 
