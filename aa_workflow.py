@@ -126,16 +126,16 @@ model_dir = "train" # before training, create this empty folder at the same leve
 #
 # # Run merge_mgf_file() and merge_feature_file()
 # # ======================= UNCOMMENT and RUN ======================================
-# folder_path = data_training_dir
-# fraction_list = range(0, num_fractions)
-# merge_mgf_file(
-#     input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
-#     fraction_list=fraction_list,
-#     output_file=folder_path + "spectrum.mgf")
-# merge_feature_file(
-#     input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
-#     fraction_list=fraction_list,
-#     output_file=folder_path + "feature.csv")
+folder_path = data_training_dir
+fraction_list = range(0, num_fractions)
+merge_mgf_file(
+    input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
+    fraction_list=fraction_list,
+    output_file=folder_path + "spectrum.mgf")
+merge_feature_file(
+    input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
+    fraction_list=fraction_list,
+    output_file=folder_path + "feature.csv")
 # ================================================================================
 # We will get two output files in the same folder: "spectrum.mgf" and "feature.csv".
 # Both functions also report the number of entries that have been processed: "counter = 694565".
