@@ -175,12 +175,14 @@ def read_denovo_psm(psm_file):
   return denovo_peptide_psm
 
 
-def read_netmhc(netmhc_file):
+def read_netmhc(netmhc_file, num_alleles):
 
   print("read_netmhc()")
   print("netmhc_file:", netmhc_file)
 
-  # store NetMHC predictions of denovo peptides in a dictionary 
+  nM_columns = ["nM" + "{}".format(i) for i in range(1, num_alleles + 1)]
+  rank_columns = ["Rank" + "{}".format(i) for i in range(1, num_alleles + 1)]
+  # store NetMHC predictions of denovo peptides in a dictionary
   # {peptide: {'best_nM': , 'best_rank': , 'is_weak_binding': , 'is_strong_binding': }}
   peptide_netmhc = {}
   with open(netmhc_file, 'r') as input_handle:
@@ -188,8 +190,8 @@ def read_netmhc(netmhc_file):
     for row in csv_reader:
       peptide = row['Peptide']
       if peptide not in peptide_netmhc:
-        best_nM = min([float(row[x]) for x in ['nM1', 'nM2', 'nM3', 'nM4', 'nM5', 'nM6'] if x in csv_reader.fieldnames])
-        best_rank = min([float(row[x]) for x in ['Rank1', 'Rank2', 'Rank3', 'Rank4', 'Rank5', 'Rank6'] if x in csv_reader.fieldnames])
+        best_nM = min([float(row[x]) for x in nM_columns if x in csv_reader.fieldnames])
+        best_rank = min([float(row[x]) for x in rank_columns if x in csv_reader.fieldnames])
         is_weak_binding = int(best_rank <= WEAK_BINDING)
         is_strong_binding = int(best_rank <= STRONG_BINDING)
         peptide_netmhc[peptide] = {
@@ -485,14 +487,28 @@ def match_peptide_snp(peptide_list, snp_file, snp_enst_fasta, snp_sample_id):
 
 def step_5(psm_file, netmhc_file, immunogenicity_file, db_fasta_file, labeled_feature_file,
            snp_file, snp_enst_fasta, snp_sample_id,
-           output_neoantigen_criteria, output_protein_mutation):
+           output_neoantigen_criteria, output_protein_mutation, num_alleles=6):
+  """
+
+  :param psm_file:
+  :param netmhc_file: could be None
+  :param immunogenicity_file: could be None
+  :param db_fasta_file:
+  :param labeled_feature_file:
+  :param snp_file: could be None, when is None, the value of snp_enst_fasta and snp_sample_id do not matter.
+  :param snp_enst_fasta:
+  :param snp_sample_id:
+  :param output_neoantigen_criteria:
+  :param output_protein_mutation:
+  :return:
+  """
 
   print("".join(["="] * 80)) # section-separating line
   print("step_5()")
 
   denovo_psm = read_denovo_psm(psm_file)
   if netmhc_file:
-    denovo_netmhc = read_netmhc(netmhc_file)
+    denovo_netmhc = read_netmhc(netmhc_file, num_alleles)
   else:
     denovo_netmhc = None
   denovo_peptide_list = denovo_psm.keys()
