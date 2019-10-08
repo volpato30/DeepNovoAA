@@ -10,6 +10,7 @@ import Levenshtein
 import multiprocessing
 num_processes = 8
 import time
+from aa_workflow_step_4_2 import accession_from_denovo_peptide_sidhant
 
 
 WEAK_BINDING = 2.0 # NetMHC weak binding rank
@@ -152,7 +153,8 @@ def read_denovo_psm(psm_file):
     csv_reader = csv.DictReader(input_handle, delimiter=',')
     for row in csv_reader:
       accession = drop_mod_peaks(row['Accession'])
-      if accession == 'DENOVO':
+      # if accession == 'DENOVO':
+      if accession_from_denovo_peptide_sidhant(accession):
         peptide = drop_mod_peaks(row['Peptide'])
         score = float(row['-10lgP'])
         abundance = float(row['Area']) if row['Area'] else 0
