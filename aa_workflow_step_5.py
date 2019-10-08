@@ -176,6 +176,13 @@ def read_denovo_psm(psm_file):
 
 
 def read_netmhc(netmhc_file, num_alleles):
+  """
+
+  :param netmhc_file:
+  :param num_alleles:
+  :return:
+  a dict where the key is peptide string
+  """
 
   print("read_netmhc()")
   print("netmhc_file:", netmhc_file)

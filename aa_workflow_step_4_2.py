@@ -142,8 +142,10 @@ def postprocess(psm_file, output_denovo_peptide_file):
         num_denovo_psm += 1
         denovo_peptide_set.add(peptide)
 
+  denovo_peptide_list = list(denovo_peptide_set)
+  denovo_peptide_list = sorted(denovo_peptide_list, key=lambda x: len(x))
   with open(output_denovo_peptide_file, 'w') as output_handle:
-    for peptide in denovo_peptide_set:
+    for peptide in denovo_peptide_list:
         output_handle.write(peptide + '\n')
 
   num_denovo_peptides = len(denovo_peptide_set)
