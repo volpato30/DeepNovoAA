@@ -200,141 +200,141 @@ model_dir = "train" # before training, create this empty folder at the same leve
 # os.system(command)
 # # ================================================================================
 #
-# # Run DeepNovo testing
-# # ======================= UNCOMMENT and RUN ======================================
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test_true_feeding"]
-# command += ["--train_dir", model_dir]
-# command += ["--test_spectrum", data_training_dir + "spectrum.mgf"]
-# command += ["--test_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
-# command += ["--train_dir", model_dir]
-# command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
-# command += ["--denovo_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# command += ["--predicted_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
-# # ================================================================================
-# # The testing accuracy at the amino acid (AA) and peptide levels will be reported as following:
-# #   "precision_AA_mass_db  = 0.8425"
-# #   "precision_peptide_mass_db  = 0.6430"
+# Run DeepNovo testing
+# ======================= UNCOMMENT and RUN ======================================
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test_true_feeding"]
+command += ["--train_dir", model_dir]
+command += ["--test_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--test_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command = " ".join(command)
+print(command)
+os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
+command += ["--train_dir", model_dir]
+command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--denovo_feature", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command = " ".join(command)
+print(command)
+os.system(command)
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command += ["--predicted_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo"]
+command = " ".join(command)
+print(command)
+os.system(command)
+# ================================================================================
+# The testing accuracy at the amino acid (AA) and peptide levels will be reported as following:
+#   "precision_AA_mass_db  = 0.8425"
+#   "precision_peptide_mass_db  = 0.6430"
 #
 #
 #
 #
-# # ================================================================================
-# # Step 3: Perform personalized de novo sequencing with DeepNovo.
-# # ================================================================================
-#
-# # This step 3 took about 5 hours on a server with GPU Titan X, 32 GB memory
-#
-# # Run DeepNovo de novo sequencing on all features (label and unlabeled)
-# # ======================= UNCOMMENT and RUN ======================================
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
-# command += ["--train_dir", model_dir]
-# command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
-# command += ["--denovo_feature", data_training_dir + "feature.csv.mass_corrected"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
-# # ================================================================================
-# # The de novo results will be written to the file "feature.csv.mass_corrected.deepnovo_denovo".
-# # The tool will also report the number of features that have been processed:
-# #   "Total spectra: 694565"
-# #     "read: 690354"
-# #     "skipped: 4211"
-# #       "by mass: 4211"
-#
-#
-#
-#
-# # ================================================================================
-# # Step 4: Quality control.
-# # ================================================================================
-#
-# # ================================================================================
-# # Step 4.1: Post-process de novo results to improve their accuracy.
-# # ================================================================================
-#
-# # Run select_top_score()
-# # This script selects a threshold of de novo confidence scores and uses it to filter de novo results.
-# # The score threshold is calculated based on a 95% cutoff of the testing accuracy obtained at the end of Step 2 above.
-# # ======================= UNCOMMENT and RUN ======================================
-# accuracy_cutoff = 0.95
-# accuracy_file = data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo.accuracy"
-# score_cutoff = find_score_cutoff(accuracy_file, accuracy_cutoff)
-# input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo"
-# output_file = input_file + ".top95"
-# select_top_score(input_file, output_file, score_cutoff)
-# # ================================================================================
-# # After this step we'll get the file "feature.csv.mass_corrected.deepnovo_denovo.top95".
-# # The score cutoff and the number of selected features will also be reported:
-# #   "score_cutoff =  -0.5"
-# #   "total_feature =  690354"
-# #   "select_feature =  233589"
-#
-# # Run convert_I_to_L()
-# # This script converts I (Isoleucine) to L (Leucine) in all de novo peptides, because de novo sequencing is not able to distinguish them.
-# # ======================= UNCOMMENT and RUN ======================================
-# input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95"
-# output_file = input_file + ".I_to_L"
-# convert_I_to_L(input_file, output_file)
-# # ================================================================================
-#
-# # Run correct_by_consensus()
-# # This script corrects de novo sequencing errors by grouping predicted sequences of the same mass together and voting the consensus sequence.
-# # ======================= UNCOMMENT and RUN ======================================
-# input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L"
-# output_file = input_file + ".consensus"
-# correct_by_consensus(input_file, output_file)
-# # ================================================================================
-#
-# # Run filter_by_minlen()
-# # This script filters out sequences of length less than 5 amino acids.
-# # ======================= UNCOMMENT and RUN ======================================
+# ================================================================================
+# Step 3: Perform personalized de novo sequencing with DeepNovo.
+# ================================================================================
+
+# This step 3 took about 5 hours on a server with GPU Titan X, 32 GB memory
+
+# Run DeepNovo de novo sequencing on all features (label and unlabeled)
+# ======================= UNCOMMENT and RUN ======================================
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --search_denovo"]
+command += ["--train_dir", model_dir]
+command += ["--denovo_spectrum", data_training_dir + "spectrum.mgf"]
+command += ["--denovo_feature", data_training_dir + "feature.csv.mass_corrected"]
+command = " ".join(command)
+print(command)
+os.system(command)
+# ================================================================================
+# The de novo results will be written to the file "feature.csv.mass_corrected.deepnovo_denovo".
+# The tool will also report the number of features that have been processed:
+#   "Total spectra: 694565"
+#     "read: 690354"
+#     "skipped: 4211"
+#       "by mass: 4211"
+
+
+
+
+# ================================================================================
+# Step 4: Quality control.
+# ================================================================================
+
+# ================================================================================
+# Step 4.1: Post-process de novo results to improve their accuracy.
+# ================================================================================
+
+# Run select_top_score()
+# This script selects a threshold of de novo confidence scores and uses it to filter de novo results.
+# The score threshold is calculated based on a 95% cutoff of the testing accuracy obtained at the end of Step 2 above.
+# ======================= UNCOMMENT and RUN ======================================
+accuracy_cutoff = 0.95
+accuracy_file = data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare.deepnovo_denovo.accuracy"
+score_cutoff = find_score_cutoff(accuracy_file, accuracy_cutoff)
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo"
+output_file = input_file + ".top95"
+select_top_score(input_file, output_file, score_cutoff)
+# ================================================================================
+# After this step we'll get the file "feature.csv.mass_corrected.deepnovo_denovo.top95".
+# The score cutoff and the number of selected features will also be reported:
+#   "score_cutoff =  -0.5"
+#   "total_feature =  690354"
+#   "select_feature =  233589"
+
+# Run convert_I_to_L()
+# This script converts I (Isoleucine) to L (Leucine) in all de novo peptides, because de novo sequencing is not able to distinguish them.
+# ======================= UNCOMMENT and RUN ======================================
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95"
+output_file = input_file + ".I_to_L"
+convert_I_to_L(input_file, output_file)
+# ================================================================================
+
+# Run correct_by_consensus()
+# This script corrects de novo sequencing errors by grouping predicted sequences of the same mass together and voting the consensus sequence.
+# ======================= UNCOMMENT and RUN ======================================
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L"
+output_file = input_file + ".consensus"
+correct_by_consensus(input_file, output_file)
+# ================================================================================
+
+# Run filter_by_minlen()
+# This script filters out sequences of length less than 5 amino acids.
+# ======================= UNCOMMENT and RUN ======================================
 # minlen = 5
-# input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus"
-# output_file = input_file + ".minlen" + str(minlen)
-# filter_by_minlen(input_file, output_file, minlen)
-# # ================================================================================
-# # The numbers of features will be reported as:
-# #   "total_feature =  233589"
-# #   "minlen_feature =  223507"
-# #   "removed_feature =  10082"
-#
-# # Up to this step, we get the following file:
-# #   "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"
-# # We test its accuracy against the test set:
-# # Run DeepNovo testing
-# # ======================= UNCOMMENT and RUN ======================================
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
-# command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
-# # ================================================================================
-# # We get these results:
-# #   "precision_AA_mass_db  = 0.9530"
-# #   "precision_peptide_mass_db  = 0.8441"
-#
-# # Repeat the same testing but now against all labeled features:
-# # Run DeepNovo testing
-# # ====================== UNCOMMENT and RUN =======================================
-# command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
-# command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected"]
-# command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
-# command = " ".join(command)
-# print(command)
-# os.system(command)
+input_file = data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus"
+output_file = input_file + ".minlen" + str(minlen)
+filter_by_minlen(input_file, output_file, minlen)
+# ================================================================================
+# The numbers of features will be reported as:
+#   "total_feature =  233589"
+#   "minlen_feature =  223507"
+#   "removed_feature =  10082"
+
+# Up to this step, we get the following file:
+#   "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"
+# We test its accuracy against the test set:
+# Run DeepNovo testing
+# ======================= UNCOMMENT and RUN ======================================
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected.test.noshare"]
+command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
+command = " ".join(command)
+print(command)
+os.system(command)
+# ================================================================================
+# We get these results:
+#   "precision_AA_mass_db  = 0.9530"
+#   "precision_peptide_mass_db  = 0.8441"
+
+# Repeat the same testing but now against all labeled features:
+# Run DeepNovo testing
+# ====================== UNCOMMENT and RUN =======================================
+command = ["LD_PRELOAD=\"/usr/lib/libtcmalloc.so\" /usr/bin/time -v python deepnovo_main.py --test"]
+command += ["--target_file", data_training_dir + "feature.csv.labeled.mass_corrected"]
+command += ["--predicted_file", data_training_dir + "feature.csv.mass_corrected.deepnovo_denovo.top95.I_to_L.consensus.minlen5"]
+command = " ".join(command)
+print(command)
+os.system(command)
 # # ================================================================================
 # # We get these results:
 # #   "precision_AA_mass_db  = 0.9797"
