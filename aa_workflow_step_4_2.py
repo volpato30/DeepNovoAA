@@ -107,6 +107,16 @@ def preprocess(denovo_file, db_fasta_file, labeled_feature_file, peptide_list_fa
   print("num_denovo_peptides =", num_denovo_peptides)
 
 
+
+def accession_from_denovo_peptide_sidhant(accession):
+    """
+    output format from the Sidhant build
+    :param accession:
+    :return:
+    """
+    accession_list = accession.split(':')
+    return all(["DENOVO" in x for x in accession_list])
+
 def postprocess(psm_file, output_denovo_peptide_file):
   """Extract denovo peptides from the PSMs of PEAKS X DB search round 2.
 
@@ -128,7 +138,8 @@ def postprocess(psm_file, output_denovo_peptide_file):
     for row in csv_reader:
       peptide = drop_mod_peaks(row['Peptide'])
       accession = drop_mod_peaks(row['Accession'])
-      if accession == 'DENOVO':
+      # if accession == 'DENOVO':
+      if accession_from_denovo_peptide_sidhant(accession):
         num_denovo_psm += 1
         denovo_peptide_set.add(peptide)
 
