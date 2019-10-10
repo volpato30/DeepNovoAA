@@ -16,167 +16,167 @@ data_training_dir = "HLA_London/class1/"
 num_fractions = 3
 model_dir = "train" # before training, create this empty folder at the same level as Python scripts.
 
-
-# ================================================================================
-# Workflow of neoantigen discovery by personalized de novo sequencing.
-# ================================================================================
-
-# Step-by-step instructions based on the following example dataset:
-
-#   Patient Mel-16 (Bassani-Sternberg et al., Nature Communication, 2016)
-#   HLA class 1: 12 raw files, 1 failed to run PEAKS
-
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_1_A
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_1_B
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_2_A
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_2_B
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_3_A
-#     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_3_B
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_1_A_1
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_1_B_1, failed
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_2_A_1
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_2_B_1
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_3_A_1
-#     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_3_B_1
-
-
-
-
-# ================================================================================
-# Step 1: Build the immunopeptidome of the patient.
-# ================================================================================
-
-# This step 1 took about ?? hours on a laptop with 4 CPU cores i7, 16 GB memory
-
-# ================================================================================
-# Step 1.1: Run PEAKS X DB search on the raw files with the following parameters:
-# ================================================================================
-
-#     Enzyme: None
-#     Instrument: Orbi-Orbi
-#     Fragment: HCD
-#     Acquisition: DDA
-
-#     Parent Mass Error Tolerance: 15.0 ppm
-#     Fragment Mass Error Tolerance: 0.05 Da
-#     Precursor Mass Search Type: monoisotopic
-#     Enzyme: None
-#     Digest Mode: Unspecific
-#     Max Missed Cleavages: 100
-#     Variable Modifications:
-#       Oxidation (M): 15.99
-#       Deamidation (NQ): 0.98
-#     Max Variable PTM Per Peptide: 3
-#     Database: uniprot_sprot.human
-#     Taxon: All
-#     Contaminant Database: contaminants_maxquant
-#     Searched Entry: 20488
-#     FDR Estimation: Enabled
-#     Merge Options: no merge
-#     Precursor Options: corrected
-#     Charge Options: no correction
-#     Filter Options: no filter
-#     Process: true
-#     Associate chimera: no
-
-
-
-
-# ================================================================================
-# Step 1.2: Set FDR 1.0%.
-# ================================================================================
-
-# The number of MS/MS spectra is "694565", the number of peptide-spectrum matches (PSMs) is "207332", the number of peptide sequences is "26594".
-
-
-
-
-# ================================================================================
-# Step 1.3: Right-click on the DB search node "??", select "Deep Denovo Export".
-# ================================================================================
-
-# We will get the following 11 pairs of csv and mgf files in the PEAKS project folder:
-
-#       export_0.csv, export_0.mgf
-#       export_1.csv, export_1.mgf
-#       export_2.csv, export_2.mgf
-#       export_3.csv, export_3.mgf
-#       export_4.csv, export_4.mgf
-#       export_5.csv, export_5.mgf
-#       export_6.csv, export_6.mgf
-#       export_7.csv, export_7.mgf
-#       export_8.csv, export_8.mgf
-#       export_9.csv, export_9.mgf
-#       export_10.csv, export_10.mgf
-
-
-
-
-# ================================================================================
-# Step 2: Train personalized DeepNovo model.
-# ================================================================================
-
-# This step 2 took about 12 hours on a server with GPU Titan X, 32 GB memory
-
-# Note that you will need to specify the paths to your own data and model folders when you run the Python scripts. The following scripts just show examples of my data and model folders.
-
-# ================================================================================
-# Step 2.1: Prepare the training data.
-# ================================================================================
-
-# Run merge_mgf_file() and merge_feature_file()
-# ======================= UNCOMMENT and RUN ======================================
-folder_path = data_training_dir
-fraction_list = range(0, num_fractions)
-merge_mgf_file(
-    input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
-    fraction_list=fraction_list,
-    output_file=folder_path + "spectrum.mgf")
-merge_feature_file(
-    input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
-    fraction_list=fraction_list,
-    output_file=folder_path + "feature.csv")
-# ================================================================================
-# We will get two output files in the same folder: "spectrum.mgf" and "feature.csv".
-# Both functions also report the number of entries that have been processed: "counter = 694565".
-# That number should be the same as the total number of MS/MS spectra from the raw files.
-
-# Run split_feature_unlabel()
-# ======================= UNCOMMENT and RUN ======================================
-input_feature_file = data_training_dir + "feature.csv"
-split_feature_unlabel(input_feature_file)
-# ================================================================================
-# It will split the "feature.csv" into 2 files: "feature.csv.labeled" and "feature.csv.unlabeled".
-# It also reports the number of labeled and unlabel features: "num_labeled = 207332" and "num_unlabeled = 487233".
-# Note that "207332" is also the number of PSMs reported at FDR 1.0% in Step 1.
-
-# Run calculate_mass_shift_ppm() and correct_mass_shift_ppm()
-# ======================= UNCOMMENT and RUN ======================================
-labeled_feature_file = data_training_dir + "feature.csv.labeled"
-ppm = calculate_mass_shift_ppm(labeled_feature_file)
-input_feature_file = data_training_dir + "feature.csv.labeled"
-correct_mass_shift_ppm(input_feature_file, ppm)
-input_feature_file = data_training_dir + "feature.csv"
-correct_mass_shift_ppm(input_feature_file, ppm)
-# ================================================================================
-# The mass shift is calculated from "feature.csv.labeled".
-# The mass shift ppm (part per million) is reported as: "mean_precursor_ppm = 7.07514819678".
-# Then mass is corrected for 2 files: "feature.csv.labeled.mass_corrected" and "feature.csv.mass_corrected".
-
-# Run split_feature_training_noshare()
-# ======================= UNCOMMENT and RUN ======================================
-input_feature_file = data_training_dir + "feature.csv.labeled.mass_corrected"
-proportion = [0.90, 0.05, 0.05]
-split_feature_training_noshare(input_feature_file, proportion)
-# ================================================================================
-# It will split "feature.csv.labeled.mass_corrected" into train/valid/test sets with "proportion = [0.9, 0.05, 0.05]".
-# Those 3 sets do not share common peptides.
-# Their sizes are also reported.
-#   "num_total = 207332"
-#   "num_unique = 26656"
-#   "num_train = 185823"
-#   "num_valid = 10900"
-#   "num_test = 10609"
+#
+# # ================================================================================
+# # Workflow of neoantigen discovery by personalized de novo sequencing.
+# # ================================================================================
+#
+# # Step-by-step instructions based on the following example dataset:
+#
+# #   Patient Mel-16 (Bassani-Sternberg et al., Nature Communication, 2016)
+# #   HLA class 1: 12 raw files, 1 failed to run PEAKS
+#
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_1_A
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_1_B
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_2_A
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_2_B
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_3_A
+# #     20141212_QEp7_MiBa_SA_HLA-I-p_MM16_3_B
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_1_A_1
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_1_B_1, failed
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_2_A_1
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_2_B_1
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_3_A_1
+# #     20141213_QEp7_MiBa_SA_HLA-I-p_MM16_3_B_1
+#
+#
+#
+#
+# # ================================================================================
+# # Step 1: Build the immunopeptidome of the patient.
+# # ================================================================================
+#
+# # This step 1 took about ?? hours on a laptop with 4 CPU cores i7, 16 GB memory
+#
+# # ================================================================================
+# # Step 1.1: Run PEAKS X DB search on the raw files with the following parameters:
+# # ================================================================================
+#
+# #     Enzyme: None
+# #     Instrument: Orbi-Orbi
+# #     Fragment: HCD
+# #     Acquisition: DDA
+#
+# #     Parent Mass Error Tolerance: 15.0 ppm
+# #     Fragment Mass Error Tolerance: 0.05 Da
+# #     Precursor Mass Search Type: monoisotopic
+# #     Enzyme: None
+# #     Digest Mode: Unspecific
+# #     Max Missed Cleavages: 100
+# #     Variable Modifications:
+# #       Oxidation (M): 15.99
+# #       Deamidation (NQ): 0.98
+# #     Max Variable PTM Per Peptide: 3
+# #     Database: uniprot_sprot.human
+# #     Taxon: All
+# #     Contaminant Database: contaminants_maxquant
+# #     Searched Entry: 20488
+# #     FDR Estimation: Enabled
+# #     Merge Options: no merge
+# #     Precursor Options: corrected
+# #     Charge Options: no correction
+# #     Filter Options: no filter
+# #     Process: true
+# #     Associate chimera: no
+#
+#
+#
+#
+# # ================================================================================
+# # Step 1.2: Set FDR 1.0%.
+# # ================================================================================
+#
+# # The number of MS/MS spectra is "694565", the number of peptide-spectrum matches (PSMs) is "207332", the number of peptide sequences is "26594".
+#
+#
+#
+#
+# # ================================================================================
+# # Step 1.3: Right-click on the DB search node "??", select "Deep Denovo Export".
+# # ================================================================================
+#
+# # We will get the following 11 pairs of csv and mgf files in the PEAKS project folder:
+#
+# #       export_0.csv, export_0.mgf
+# #       export_1.csv, export_1.mgf
+# #       export_2.csv, export_2.mgf
+# #       export_3.csv, export_3.mgf
+# #       export_4.csv, export_4.mgf
+# #       export_5.csv, export_5.mgf
+# #       export_6.csv, export_6.mgf
+# #       export_7.csv, export_7.mgf
+# #       export_8.csv, export_8.mgf
+# #       export_9.csv, export_9.mgf
+# #       export_10.csv, export_10.mgf
+#
+#
+#
+#
+# # ================================================================================
+# # Step 2: Train personalized DeepNovo model.
+# # ================================================================================
+#
+# # This step 2 took about 12 hours on a server with GPU Titan X, 32 GB memory
+#
+# # Note that you will need to specify the paths to your own data and model folders when you run the Python scripts. The following scripts just show examples of my data and model folders.
+#
+# # ================================================================================
+# # Step 2.1: Prepare the training data.
+# # ================================================================================
+#
+# # Run merge_mgf_file() and merge_feature_file()
+# # ======================= UNCOMMENT and RUN ======================================
+# folder_path = data_training_dir
+# fraction_list = range(0, num_fractions)
+# merge_mgf_file(
+#     input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
+#     fraction_list=fraction_list,
+#     output_file=folder_path + "spectrum.mgf")
+# merge_feature_file(
+#     input_file_list=[folder_path + "export_" + str(i) + ".csv" for i in fraction_list],
+#     fraction_list=fraction_list,
+#     output_file=folder_path + "feature.csv")
+# # ================================================================================
+# # We will get two output files in the same folder: "spectrum.mgf" and "feature.csv".
+# # Both functions also report the number of entries that have been processed: "counter = 694565".
+# # That number should be the same as the total number of MS/MS spectra from the raw files.
+#
+# # Run split_feature_unlabel()
+# # ======================= UNCOMMENT and RUN ======================================
+# input_feature_file = data_training_dir + "feature.csv"
+# split_feature_unlabel(input_feature_file)
+# # ================================================================================
+# # It will split the "feature.csv" into 2 files: "feature.csv.labeled" and "feature.csv.unlabeled".
+# # It also reports the number of labeled and unlabel features: "num_labeled = 207332" and "num_unlabeled = 487233".
+# # Note that "207332" is also the number of PSMs reported at FDR 1.0% in Step 1.
+#
+# # Run calculate_mass_shift_ppm() and correct_mass_shift_ppm()
+# # ======================= UNCOMMENT and RUN ======================================
+# labeled_feature_file = data_training_dir + "feature.csv.labeled"
+# ppm = calculate_mass_shift_ppm(labeled_feature_file)
+# input_feature_file = data_training_dir + "feature.csv.labeled"
+# correct_mass_shift_ppm(input_feature_file, ppm)
+# input_feature_file = data_training_dir + "feature.csv"
+# correct_mass_shift_ppm(input_feature_file, ppm)
+# # ================================================================================
+# # The mass shift is calculated from "feature.csv.labeled".
+# # The mass shift ppm (part per million) is reported as: "mean_precursor_ppm = 7.07514819678".
+# # Then mass is corrected for 2 files: "feature.csv.labeled.mass_corrected" and "feature.csv.mass_corrected".
+#
+# # Run split_feature_training_noshare()
+# # ======================= UNCOMMENT and RUN ======================================
+# input_feature_file = data_training_dir + "feature.csv.labeled.mass_corrected"
+# proportion = [0.90, 0.05, 0.05]
+# split_feature_training_noshare(input_feature_file, proportion)
+# # ================================================================================
+# # It will split "feature.csv.labeled.mass_corrected" into train/valid/test sets with "proportion = [0.9, 0.05, 0.05]".
+# # Those 3 sets do not share common peptides.
+# # Their sizes are also reported.
+# #   "num_total = 207332"
+# #   "num_unique = 26656"
+# #   "num_train = 185823"
+# #   "num_valid = 10900"
+# #   "num_test = 10609"
 
 
 
