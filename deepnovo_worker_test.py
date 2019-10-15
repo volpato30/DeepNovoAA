@@ -15,6 +15,7 @@ import sys
 import numpy as np
 
 import deepnovo_config
+from data_reader import parse_raw_sequence
 
 class WorkerTest(object):
   """TODO(nh2tran): docstring.
@@ -86,7 +87,7 @@ class WorkerTest(object):
 
     self._get_target()
     target_count_total = len(self.target_dict)
-    target_len_total = sum([len(x) for x in self.target_dict.itervalues()])
+    target_len_total = sum([len(x) for x in self.target_dict.values()])
 
     # this part is tricky!
     # some target peptides are reported by PEAKS DB but not found in
@@ -95,7 +96,7 @@ class WorkerTest(object):
     #   otherwise, use all target peptides
     target_dict_db = {}
     if db_peptide_list is not None:
-      for feature_id, target in self.target_dict.iteritems():
+      for feature_id, target in self.target_dict.items():
         target_simplied = target
         # remove the extension 'mod' from variable modifications
         target_simplied = ['M' if x=='M(Oxidation)' else x for x in target_simplied]
@@ -108,15 +109,15 @@ class WorkerTest(object):
     else:
       target_dict_db = self.target_dict
     target_count_db = len(target_dict_db)
-    target_len_db = sum([len(x) for x in target_dict_db.itervalues()])
+    target_len_db = sum([len(x) for x in target_dict_db.values()])
 
     # we also skip target peptides with precursor_mass > MZ_MAX
     target_dict_db_mass = {}
-    for feature_id, peptide in target_dict_db.iteritems():
+    for feature_id, peptide in target_dict_db.items():
       if self._compute_peptide_mass(peptide) <= self.MZ_MAX:
         target_dict_db_mass[feature_id] = peptide
     target_count_db_mass = len(target_dict_db_mass)
-    target_len_db_mass = sum([len(x) for x in target_dict_db_mass.itervalues()])
+    target_len_db_mass = sum([len(x) for x in target_dict_db_mass.values()])
 
     # read predicted peptides from deepnovo or peaks
     if deepnovo_config.predicted_format == "deepnovo":
@@ -224,7 +225,7 @@ class WorkerTest(object):
     denovo_only_handle.close()
 
     multifea_dict = {}
-    for scan_id, value in scan_dict.iteritems():
+    for scan_id, value in scan_dict.items():
       feature_count = value["feature_count"]
       feature_list = value["feature_list"]
       if feature_count > 1:
@@ -240,7 +241,7 @@ class WorkerTest(object):
                      "feature_list"]
       header_row = "\t".join(header_list)
       print(header_row, file=handle, end="\n")
-      for scan_id, value in scan_dict.iteritems():
+      for scan_id, value in scan_dict.items():
         print_list = [scan_id,
                       str(value["feature_count"]),
                       ";".join(value["feature_list"])]
@@ -252,7 +253,7 @@ class WorkerTest(object):
                      "scan_list"]
       header_row = "\t".join(header_list)
       print(header_row, file=handle, end="\n")
-      for feature_id, scan_list in multifea_dict.iteritems():
+      for feature_id, scan_list in multifea_dict.items():
         print_list = [feature_id,
                       ";".join(scan_list)]
         print_row = "\t".join(print_list)
@@ -365,7 +366,9 @@ class WorkerTest(object):
         predicted["feature_id"] = "F" + line_split[col_fraction_id] + ":" + line_split[col_scan_id]
         raw_sequence = line_split[col_sequence]
         assert raw_sequence, "Error: wrong format."
-        predicted["sequence"] = self._parse_sequence(raw_sequence)
+        okay, predicted["sequence"] = parse_raw_sequence(raw_sequence)
+        if not okay:
+          raise ValueError(f"unknown modification in {raw_sequence}")
         # skip peptides with precursor_mass > MZ_MAX
         if self._compute_peptide_mass(predicted["sequence"]) > self.MZ_MAX:
           continue
@@ -378,7 +381,6 @@ class WorkerTest(object):
 
     self.predicted_list = predicted_list
 
-
   def _get_target(self):
     """TODO(nh2tran): docstring."""
 
@@ -388,51 +390,19 @@ class WorkerTest(object):
     target_dict = {}
     with open(self.target_file, 'r') as handle:
       header_line = handle.readline()
+      header = header_line.strip().split(',')
+      raw_sequence_index = header.index(deepnovo_config.col_raw_sequence)
       for line in handle:
         line = re.split(',|\r|\n', line)
         feature_id = line[0]
-        raw_sequence = line[deepnovo_config.col_raw_sequence]
+        raw_sequence = line[raw_sequence_index]
         assert raw_sequence, "Error: wrong target format."
-        peptide = self._parse_sequence(raw_sequence)
-        if peptide is None:
+        okay, peptide = parse_raw_sequence(raw_sequence)
+        if not okay:
+          # skip unknown mod
           continue
         target_dict[feature_id] = peptide
     self.target_dict = target_dict
-
-
-  def _parse_sequence(self, raw_sequence):
-    """if see unknown modification, return None"""
-
-    #~ print("".join(["="] * 80)) # section-separating line
-    #~ print("WorkerTest._parse_sequence()")
-
-    raw_sequence_len = len(raw_sequence)
-    peptide = []
-    index = 0
-    while index < raw_sequence_len:
-      if raw_sequence[index] == "(":
-        if peptide[-1] == "C" and raw_sequence[index:index+8] == "(+57.02)":
-          peptide[-1] = "C(Carbamidomethylation)"
-          index += 8
-        elif peptide[-1] == 'M' and raw_sequence[index:index+8] == "(+15.99)":
-          peptide[-1] = 'M(Oxidation)'
-          index += 8
-        elif peptide[-1] == 'N' and raw_sequence[index:index+6] == "(+.98)":
-          peptide[-1] = 'N(Deamidation)'
-          index += 6
-        elif peptide[-1] == 'Q' and raw_sequence[index:index+6] == "(+.98)":
-          peptide[-1] = 'Q(Deamidation)'
-          index += 6
-        else: # unknown modification
-          print("ERROR: unknown modification!")
-          print("raw_sequence = ", raw_sequence)
-          return None
-      else:
-        peptide.append(raw_sequence[index])
-        index += 1
-
-    return peptide
-
 
   def _match_AA_novor(self, target, predicted):
     """TODO(nh2tran): docstring."""

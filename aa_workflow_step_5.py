@@ -301,7 +301,9 @@ def read_db_peptide(labeled_feature_file):
   return db_peptide_set
 
 
-def hamming1_align((peptide, protein_list)):
+def hamming1_align(input_data):
+
+  peptide, protein_list = input_data
 
   # I and L are considered the same in this alignment
   query = peptide.replace('I', 'L')

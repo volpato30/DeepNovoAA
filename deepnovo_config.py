@@ -70,17 +70,10 @@ tf.app.flags.DEFINE_integer("beam_size",
                             5,
                             "Number of optimal paths to search during decoding.")
 
-tf.app.flags.DEFINE_boolean("search_db",
-                            False,
-                            "Set to True to do a database search.")
 
 tf.app.flags.DEFINE_boolean("search_denovo",
                             False,
                             "Set to True to do a denovo search.")
-
-tf.app.flags.DEFINE_boolean("search_hybrid",
-                            False,
-                            "Set to True to do a hybrid, db+denovo, search.")
 
 tf.app.flags.DEFINE_boolean("test",
                             False,
@@ -253,7 +246,7 @@ print("WINDOW_SIZE ", WINDOW_SIZE)
 
 # skip peptide mass > MZ_MAX
 MZ_MAX = 3000.0
-MZ_SIZE = int(MZ_MAX * SPECTRUM_RESOLUTION) # 30k
+MAX_NUM_PEAK = 1000
 
 KNAPSACK_AA_RESOLUTION = 10000 # 0.0001 Da
 mass_AA_min_round = int(round(mass_AA_min * KNAPSACK_AA_RESOLUTION)) # 57.02146
@@ -262,71 +255,56 @@ num_position = 0
 
 PRECURSOR_MASS_PRECISION_TOLERANCE = 0.01
 
-# ONLY for accuracy evaluation
-# ~ PRECURSOR_MASS_PRECISION_INPUT_FILTER = 0.01
-# ~ PRECURSOR_MASS_PRECISION_INPUT_FILTER = 1000
-AA_MATCH_PRECISION = 0.1
-
 # during training or test_true_feeding: 
 # skip peptide length > MAX_LEN
 # assign peptides to buckets of the same length for efficient padding
-if FLAGS.train or FLAGS.test_true_feeding:
-  MAX_LEN = 30
-  _buckets = [12, 22, 32]
-  print("MAX_LEN ", MAX_LEN)
-  print("_buckets ", _buckets)
-
+MAX_LEN = 60 if FLAGS.search_denovo else 30
 
 # ==============================================================================
 # HYPER-PARAMETERS of the NEURAL NETWORKS
 # ==============================================================================
-
-
-num_ion = 8 # 2
+num_ion = 12
 print("num_ion ", num_ion)
 
-l2_weight = 0.0
-print("l2_weight ", l2_weight)
+weight_decay = 0.0  # no weight decay lead to better result.
+print("weight_decay ", weight_decay)
+
+# ~ encoding_cnn_size = 4 * (RESOLUTION//10) # 4 # proportion to RESOLUTION
+# ~ encoding_cnn_filter = 4
+# ~ print("encoding_cnn_size ", encoding_cnn_size)
+# ~ print("encoding_cnn_filter ", encoding_cnn_filter)
 
 embedding_size = 512
 print("embedding_size ", embedding_size)
 
-num_layers = 1
-num_units = 512
-print("num_layers ", num_layers)
+num_lstm_layers = 1
+num_units = 64
+lstm_hidden_units = 512
+print("num_lstm_layers ", num_lstm_layers)
 print("num_units ", num_units)
 
-keep_conv = 0.75
-keep_dense = 0.5
-print("keep_conv ", keep_conv)
-print("keep_dense ", keep_dense)
+dropout_rate = 0.25
+
+batch_size = 16
+num_workers = 6
+print("batch_size ", batch_size)
+
+num_epoch = 20
+
+init_lr = 1e-3
 
 max_gradient_norm = 5.0
 print("max_gradient_norm ", max_gradient_norm)
 
-# DIA model parameters
-neighbor_size = 5 # allow up to ? spectra, including the main spectrum
-dia_window = 20.0 # the window size of MS2 scan in Dalton
+
 focal_loss = True
 
 batch_size = 32
 print("batch_size ", batch_size)
 
-epoch_stop = 10
-print("epoch_stop ", epoch_stop)
 
-train_stack_size = 1000
-valid_stack_size = 5000
-test_stack_size = 5000 # for test_true_feeding
-#decode_stack_size = 1000 # for beam_search, deprecated
-print("train_stack_size ", train_stack_size)
-print("valid_stack_size ", valid_stack_size)
-print("test_stack_size ", test_stack_size)
-#print("decode_stack_size ", decode_stack_size)
-
-steps_per_checkpoint = 100
-print("steps_per_checkpoint ", steps_per_checkpoint)
-
+steps_per_validation = 300  # 100 # 2 # 4 # 200
+print("steps_per_validation ", steps_per_validation)
 
 # ==============================================================================
 # INPUT/OUTPUT FILES
@@ -336,13 +314,6 @@ print("steps_per_checkpoint ", steps_per_checkpoint)
 # pre-built knapsack matrix
 knapsack_file = "knapsack.npy"
 
-# training/testing/decoding files
-# ~ input_spectrum_file_train = "data.training/aa.hla.bassani.nature_2016.mel_16.class_1/spectrum.mgf"
-# ~ input_feature_file_train = "data.training/aa.hla.bassani.nature_2016.mel_16.class_1/feature.csv.labeled.mass_corrected.train.noshare"
-# ~ input_spectrum_file_valid = "data.training/aa.hla.bassani.nature_2016.mel_16.class_1/spectrum.mgf"
-# ~ input_feature_file_valid = "data.training/aa.hla.bassani.nature_2016.mel_16.class_1/feature.csv.labeled.mass_corrected.valid.noshare"
-# ~ input_spectrum_file_test = "data.training/aa.hla.bassani.nature_2016.mel_15.class_1/spectrum.mgf"
-# ~ input_feature_file_test = "data.training/aa.hla.bassani.nature_2016.mel_15.class_1/feature.csv.labeled.mass_corrected.test.noshare"
 input_spectrum_file_train = FLAGS.train_spectrum
 input_feature_file_train = FLAGS.train_feature
 input_spectrum_file_valid = FLAGS.valid_spectrum
@@ -369,15 +340,14 @@ scan2fea_file = predicted_file + ".scan2fea"
 multifea_file = predicted_file + ".multifea"
 
 # feature file column format
-col_feature_id = 0
-col_precursor_mz = 1
-col_precursor_charge = 2
-col_rt_mean = 3
-col_raw_sequence = 4
-col_scan_list = 5
-col_ms1_list = 6
-col_feature_area = 7
-col_num = 8
+col_feature_id = "spec_group_id"
+col_precursor_mz = "m/z"
+col_precursor_charge = "z"
+col_rt_mean = "rt_mean"
+col_raw_sequence = "seq"
+col_scan_list = "scans"
+col_feature_area = "feature area"
+
 # predicted file column format
 pcol_feature_id = 0
 pcol_feature_area = 1
@@ -391,36 +361,7 @@ pcol_scan_list_middle = 8
 pcol_scan_list_original = 9
 pcol_score_max = 10
 
-
-# ==============================================================================
-# DB SEARCH PARAMETERS
-# ==============================================================================
-
-
-data_format = "mgf"
-cleavage_rule = "trypsin"
-num_missed_cleavage = 2
-fixed_mod_list = ['C']
-var_mod_list = ['N', 'Q', 'M']
-num_mod = 3
-precursor_mass_tolerance = 0.01 # Da
-precursor_mass_ppm = 15.0/1000000 # ppm (20 better) # instead of absolute 0.01 Da
-topk_output = 1
-
-# db files
-# ~ db_fasta_file = "data/uniprot_sprot.human.db_decoy.fasta"
-# ~ db_input_spectrum_file = "data.training/dia.pecan.hela.2018_03_29/testing.spectrum.mgf"
-# ~ db_input_feature_file = "data.training/dia.abrf.2018_03_27/testing.feature.csv.2k"
-# ~ db_output_file = db_input_feature_file + ".deepnovo_db"
-# ~ if FLAGS.decoy:  
-  # ~ db_output_file += ".decoy"
-
-# hybrid files
-# ~ hybrid_fasta_file = "data/uniprot_sprot.human.db_decoy.fasta"
-# ~ hybrid_input_spectrum_file = "data.training/dia.abrf.2018_03_27/prediction.spectrum.mgf"
-# ~ hybrid_input_feature_file = "data.training/dia.abrf.2018_03_27/prediction.feature.csv.part1"
-# ~ hybrid_denovo_file = hybrid_input_feature_file + ".deepnovo_hybrid_denovo"
-# ~ hybrid_output_file = hybrid_input_feature_file + ".deepnovo_hybrid"
-# ~ if FLAGS.decoy:
-  # ~ hybrid_output_file += ".decoy"
-
+distance_scale_factor = 100.
+sinusoid_base = 30000.
+spectrum_reso = 10
+n_position = int(MZ_MAX) * spectrum_reso
