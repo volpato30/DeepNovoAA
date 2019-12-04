@@ -127,7 +127,7 @@ model_dir = "train" # before training, create this empty folder at the same leve
 # Run merge_mgf_file() and merge_feature_file()
 # ======================= UNCOMMENT and RUN ======================================
 folder_path = data_training_dir
-fraction_list = range(0, 16, 2)
+fraction_list = [0]
 merge_mgf_file(
     input_file_list=[folder_path + "export_" + str(i) + ".mgf" for i in fraction_list],
     fraction_list=fraction_list,
