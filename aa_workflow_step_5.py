@@ -609,6 +609,10 @@ def step_5(psm_file, netmhc_file, immunogenicity_file, db_fasta_file, labeled_fe
                        if denovo_mutation[peptide]['num_missense_notflanking'] >= 1
                        and denovo_psm[peptide]['num_psm'] >= 2]
   num_selection = len(selected_peptide_list)
+  # filter by length
+  selected_peptide_list = [x for x in selected_peptide_list if 8 <= len(x) <= 14]
+
+
   print("Selected peptides:")
   for peptide in selected_peptide_list:
     print(peptide)
